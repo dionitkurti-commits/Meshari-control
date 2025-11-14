@@ -1,49 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Meshari Global Control</title>
+<meta charset="UTF-8">
+<title>Meshari Global Robot Control</title>
+
 <style>
-body {
-  background:#111; color:white; text-align:center;
-  font-family:Arial; padding:40px;
-}
-.slider { width:80%; height:30px; }
-button { padding:15px; width:200px; margin:10px; font-size:20px; }
+    body {
+        margin: 0;
+        padding: 0;
+        background: #0d0d0d;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    /* LOGO */
+    #logo {
+        width: 160px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+
+    h1 {
+        margin-top: 10px;
+        font-size: 28px;
+        letter-spacing: 1px;
+    }
+
+    .section-title {
+        margin-top: 40px;
+        font-size: 22px;
+        color: #00d4ff;
+    }
+
+    .slider-container {
+        width: 85%;
+        margin: 25px auto;
+    }
+
+    .slider-label {
+        font-size: 18px;
+        margin-bottom: 6px;
+    }
+
+    input[type="range"] {
+        width: 100%;
+        height: 30px;
+        -webkit-appearance: none;
+        background: #222;
+        border-radius: 6px;
+        outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #00d4ff;
+        cursor: pointer;
+    }
+
+    button {
+        width: 200px;
+        padding: 15px;
+        margin: 15px;
+        background: #00d4ff;
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        background: #11e0ff;
+        transform: scale(1.05);
+    }
+
+    #status {
+        margin-top: 25px;
+        font-size: 18px;
+    }
 </style>
 </head>
 <body>
 
-<h1>🌍 Meshari Global Controller</h1>
+<!-- ==================== LOGO ==================== -->
+<img id="logo" src="https://isarobotics.ai/Subtract%20(1).svg" alt="ISA Robotics Logo">
 
-<h3>Left / Right</h3>
-<input id="lx" type="range" min="-1" max="1" step="0.01" class="slider">
+<h1>🌍 Meshari Global Control</h1>
 
-<h3>Up / Down</h3>
-<input id="ly" type="range" min="-1" max="1" step="0.01" class="slider">
+<div id="status">Connecting...</div>
 
-<br><br>
+<!-- ==================== ARM CONTROL ==================== -->
+<div class="section-title">ARM CONTROL</div>
 
-<button onclick="sendFinger(1)">🖐 Close Fingers</button>
-<button onclick="sendFinger(0)">✋ Open Fingers</button>
+<div class="slider-container">
+    <div class="slider-label">Left / Right (X)</div>
+    <input id="lx" type="range" min="-1" max="1" step="0.01" value="0">
+</div>
+
+<div class="slider-container">
+    <div class="slider-label">Up / Down (Y)</div>
+    <input id="ly" type="range" min="-1" max="1" step="0.01" value="0">
+</div>
+
+<!-- ==================== FINGER CONTROL ==================== -->
+<div class="section-title">FINGER CONTROL</div>
+
+<button onclick="setFingers(1)">🖐 Close Fingers</button>
+<button onclick="setFingers(0)">✋ Open Fingers</button>
 
 <script>
-let server = "https://pencil-faster-patents-keyword.trycloudflare.com/set";
+    // 🔵 CHANGE THIS to your Cloudflare URL
+    const SERVER = "https://YOURCLOUDFLAREURL.trycloudflare.com/set";
 
-let finger_state = 0;
+    let fingerState = 0;
 
-function sendFinger(f) { finger_state = f; }
+    function setFingers(state) {
+        fingerState = state;
+    }
 
-function send() {
-    let lx = document.getElementById("lx").value;
-    let ly = document.getElementById("ly").value;
+    async function send() {
+        const lx = document.getElementById("lx").value;
+        const ly = document.getElementById("ly").value;
 
-    fetch(`${server}?lx=${lx}&ly=${ly}&fingers=${finger_state}`)
-      .catch(()=>{});
-}
+        const url = `${SERVER}?lx=${lx}&ly=${ly}&fingers=${fingerState}`;
 
-setInterval(send, 80); // 12 FPS safe
+        try {
+            const response = await fetch(url);
+            if (response.ok) {
+                document.getElementById("status").innerHTML =
+                    "🟢 Connected";
+            } else {
+                document.getElementById("status").innerHTML =
+                    "🔴 Server Error";
+            }
+        } catch (e) {
+            document.getElementById("status").innerHTML =
+                "🔴 Offline / Not Connected";
+        }
+    }
+
+    setInterval(send, 50); // 20 FPS
 </script>
+
 </body>
 </html>
-
