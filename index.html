@@ -1,137 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Live 3D Hand Control</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.152/examples/js/loaders/GLTFLoader.js"></script>
+<meta charset="UTF-8" />
+<title>Meshari Hand Control</title>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150/examples/js/loaders/GLTFLoader.js"></script>
 
 <style>
-body {
-  background:#111;
-  color:#fff;
-  font-family:Arial;
-  margin:0;
-  overflow:hidden;
-}
-
+body { margin: 0; overflow: hidden; background: #111; }
 #ui {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 260px;
-  padding: 10px;
-  background: rgba(0,0,0,0.6);
-  border-radius: 12px;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.7);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    width: 220px;
 }
-
-.slider {
-  width: 100%;
-}
+.slider { width: 100%; }
 </style>
 </head>
 <body>
 
 <div id="ui">
-  <h2>Hand Control</h2>
+    <h2>Hand Control</h2>
+    <label>Brryli</label>
+    <input id="brr" type="range" min="-1" max="1" step="0.01" class="slider">
 
-  Brryli<br>
-  <input id="brr" type="range" min="0" max="1" step="0.01" class="slider">
+    <label>Biceps</label>
+    <input id="bic" type="range" min="-1" max="1" step="0.01" class="slider">
 
-  Biceps<br>
-  <input id="bic" type="range" min="0" max="1" step="0.01" class="slider">
+    <label>Krahu</label>
+    <input id="kra" type="range" min="-1" max="1" step="0.01" class="slider">
 
-  Krahu<br>
-  <input id="kra" type="range" min="-1" max="0" step="0.01" class="slider">
-
-  Mbajtesi<br>
-  <input id="mba" type="range" min="-1" max="0" step="0.01" class="slider">
+    <label>Mbajtesi</label>
+    <input id="mba" type="range" min="-1" max="1" step="0.01" class="slider">
 </div>
 
 <script>
-let scene, camera, renderer, handModel;
-let bones = {};
+// --------------------------------------
+// BASIC THREE.JS SETUP
+// --------------------------------------
+const scene = new THREE.Scene();
 
-const URL = "https://pencil-faster-patents-keyword.trycloudflare.com/set";
+// Camera
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+camera.position.set(1, 1, 2);
 
-// ---------------------
-// THREE.JS SETUP
-// ---------------------
-scene = new THREE.Scene();
-camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-camera.position.set(0, 1, 3);
-
-renderer = new THREE.WebGLRenderer({antialias:true});
+// Renderer
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// LIGHTS
-const light = new THREE.DirectionalLight(0xffffff, 2);
-light.position.set(3,3,3);
-scene.add(light);
+// Controls
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+// LIGHTS  (THIS WAS MISSING — REQUIRED!)
+const light1 = new THREE.DirectionalLight(0xffffff, 2);
+light1.position.set(2, 2, 2);
+scene.add(light1);
+
+const light2 = new THREE.AmbientLight(0xffffff, 1.2);
+scene.add(light2);
+
+// --------------------------------------
 // LOAD GLB MODEL
+// --------------------------------------
+let handModel = null;
+
 const loader = new THREE.GLTFLoader();
 loader.load(
     "hand.glb",
-    function (gltf) {
-        scene.add(gltf.scene);
-        console.log("MODEL LOADED!");
+    (gltf) => {
+        handModel = gltf.scene;
+        handModel.scale.set(1, 1, 1);
+        scene.add(handModel);
+        console.log("GLB Loaded!");
     },
     undefined,
-    function (error) {
-        console.error("MODEL LOAD ERROR:", error);
-    }
+    (err) => console.error("GLB Load Error:", err)
 );
 
-
-
-// ---------------------
-// SLIDER → SEND COMMAND
-// ---------------------
-function sendValues() {
-    let brr = parseFloat(document.getElementById("brr").value);
-    let bic = parseFloat(document.getElementById("bic").value);
-    let kra = parseFloat(document.getElementById("kra").value);
-    let mba = parseFloat(document.getElementById("mba").value);
-
-    fetch(`${URL}/set?brr=${brr}&bic=${bic}&kra=${kra}&mba=${mba}`)
-    .catch(e => console.log("SEND ERROR", e));
-}
-
-setInterval(sendValues, 80);
-
-
-// ---------------------
-// FETCH JOINT STATE → UPDATE 3D MODEL
-// ---------------------
-function updateFromState() {
-    fetch(`${URL}/state`)
-      .then(r => r.json())
-      .then(j => {
-          if (!handModel) return;
-
-          // Convert 0..1 into rotation for GLB bones
-          if (bones["Brryli"]) bones["Brryli"].rotation.x = j.brryli * (Math.PI/2);
-          if (bones["Biceps"])  bones["Biceps"].rotation.x = j.biceps * (Math.PI/2);
-          if (bones["Krahu"])   bones["Krahu"].rotation.x = j.krahu * (Math.PI/2);
-          if (bones["Mbajtesi"])bones["Mbajtesi"].rotation.x = j.mbajtesi * (Math.PI/2);
-      })
-      .catch(e => console.log("STATE ERROR", e));
-}
-
-setInterval(updateFromState, 50);
-
-
-// ---------------------
+// --------------------------------------
 // RENDER LOOP
-// ---------------------
+// --------------------------------------
 function animate() {
     requestAnimationFrame(animate);
     renderer.render(scene, camera);
 }
-
 animate();
+
+// --------------------------------------
+// SLIDERS → YOUR PYTHON SERVER
+// --------------------------------------
+const url = "https://pst-select-wright-swing.trycloudflare.com";
+
+function send() {
+    fetch(`${url}/control?brr=${brr.value}&bic=${bic.value}&kra=${kra.value}&mba=${mba.value}`)
+        .catch(() => {});
+}
+
+setInterval(send, 50);
 </script>
 
 </body>
