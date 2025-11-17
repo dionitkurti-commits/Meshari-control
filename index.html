@@ -72,19 +72,18 @@ scene.add(light);
 
 // LOAD GLB MODEL
 const loader = new THREE.GLTFLoader();
-loader.load("hand.glb", gltf => {
-    handModel = gltf.scene;
-    scene.add(handModel);
+loader.load(
+    "hand.glb",
+    function (gltf) {
+        scene.add(gltf.scene);
+        console.log("MODEL LOADED!");
+    },
+    undefined,
+    function (error) {
+        console.error("MODEL LOAD ERROR:", error);
+    }
+);
 
-    // Find bones by name (must match your GLB rig)
-    handModel.traverse(obj => {
-        if (obj.type === "Bone") {
-            bones[obj.name] = obj;
-        }
-    });
-
-    console.log("Bones:", bones);
-});
 
 
 // ---------------------
