@@ -44,7 +44,7 @@ loader.load("hand.glb", gltf => {
 // ----------------------------
 // WEBSOCKET
 // ----------------------------
-let socket = new WebSocket("wss://YOUR-TUNNEL.trycloudflare.com");
+let socket = new WebSocket("https://pencil-faster-patents-keyword.trycloudflare.com/set");
 
 socket.onmessage = (event) => {
     let d = JSON.parse(event.data);
