@@ -1,48 +1,152 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Meshari Global Control</title>
+<meta charset="UTF-8" />
+<title>ISA Robotics – Remote Arm Control</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
 <style>
-body {
-  background:#111; color:white; text-align:center;
-  font-family:Arial; padding:40px;
-}
-.slider { width:80%; height:30px; }
-button { padding:15px; width:200px; margin:10px; font-size:20px; }
+    body {
+        background: #02030f;
+        color: #00eaff;
+        font-family: 'Orbitron', sans-serif;
+        text-align: center;
+        overflow: hidden;
+        margin: 0;
+    }
+
+    #logo {
+        width: 150px;
+        margin-top: 20px;
+        filter: drop-shadow(0 0 15px #00eaff);
+    }
+
+    #controls {
+        position: absolute;
+        bottom: 20px;
+        width: 100%;
+    }
+
+    .slider-group {
+        margin: 18px;
+    }
+
+    input[type=range] {
+        width: 300px;
+        appearance: none;
+        height: 10px;
+        background: rgba(0, 255, 255, 0.2);
+        border-radius: 50px;
+        outline: none;
+        box-shadow: 0 0 15px #00eaff;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+        appearance: none;
+        width: 25px;
+        height: 25px;
+        background: #00eaff;
+        border-radius: 50%;
+        box-shadow: 0 0 25px #00eaff;
+        cursor: pointer;
+    }
+
+    .label {
+        font-size: 18px;
+        margin-bottom: 10px;
+        display: block;
+        text-shadow: 0 0 10px #00eaff;
+    }
 </style>
 </head>
 <body>
 
-<h1>🌍 Meshari Global Controller</h1>
+<!-- Logo -->
+<img id="logo" src="https://isarobotics.ai/Subtract%20(1).svg">
 
-<h3>Left / Right</h3>
-<input id="lx" type="range" min="-1" max="1" step="0.01" class="slider">
+<!-- 3D Container -->
+<div id="scene-container" style="width:100%; height: 70vh;"></div>
 
-<h3>Up / Down</h3>
-<input id="ly" type="range" min="-1" max="1" step="0.01" class="slider">
+<!-- Controls -->
+<div id="controls">
+    <div class="slider-group">
+        <span class="label">Brryli</span>
+        <input id="brr" type="range" min="0" max="1" step="0.01">
+    </div>
 
-<br><br>
+    <div class="slider-group">
+        <span class="label">Mbajtesi</span>
+        <input id="mba" type="range" min="0" max="1" step="0.01">
+    </div>
 
-<button onclick="sendFinger(1)">🖐 Close Fingers</button>
-<button onclick="sendFinger(0)">✋ Open Fingers</button>
+    <div class="slider-group">
+        <span class="label">Krahu</span>
+        <input id="kra" type="range" min="0" max="1" step="0.01">
+    </div>
+
+    <div class="slider-group">
+        <span class="label">Biceps</span>
+        <input id="bic" type="range" min="0" max="1" step="0.01">
+    </div>
+</div>
 
 <script>
-let server = "https://detail-disabled-decision-figured.trycloudflare.com/set";
+const API_URL = "https://pencil-faster-patents-keyword.trycloudflare.com/set";
 
-let finger_state = 0;
+// -------------------------
+// 3D SCENE SETUP
+// -------------------------
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(60, window.innerWidth / (window.innerHeight*0.7), 0.1, 1000);
+let renderer = new THREE.WebGLRenderer({ antialias: true });
 
-function sendFinger(f) { finger_state = f; }
+renderer.setSize(window.innerWidth, window.innerHeight * 0.7);
+renderer.setClearColor("#02030f");
+document.getElementById("scene-container").appendChild(renderer.domElement);
 
-function send() {
-    let lx = document.getElementById("lx").value;
-    let ly = document.getElementById("ly").value;
+// lighting
+let light = new THREE.PointLight(0x00eaff, 2, 40);
+light.position.set(10, 10, 10);
+scene.add(light);
 
-    fetch(`${server}?lx=${lx}&ly=${ly}&fingers=${finger_state}`)
-      .catch(()=>{});
+// load 3d hand
+let hand;
+const loader = new THREE.GLTFLoader();
+loader.load("hand.glb", function(gltf) {
+    hand = gltf.scene;
+    hand.scale.set(2, 2, 2);
+    hand.rotation.x = Math.PI / 2;
+    scene.add(hand);
+});
+
+camera.position.z = 8;
+
+// animate
+function animate() {
+    requestAnimationFrame(animate);
+    if (hand) hand.rotation.y += 0.003;
+    renderer.render(scene, camera);
+}
+animate();
+
+// -------------------------------------------
+// SEND COMMANDS
+// -------------------------------------------
+function sendCommand() {
+    let brr = document.getElementById("brr").value;
+    let mba = document.getElementById("mba").value;
+    let kra = document.getElementById("kra").value;
+    let bic = document.getElementById("bic").value;
+
+    fetch(`${API_URL}?brr=${brr}&mba=${mba}&kra=${kra}&bic=${bic}`)
+        .catch(err => console.log("Err:", err));
 }
 
-setInterval(send, 80); // 12 FPS safe
+document.querySelectorAll("input[type=range]").forEach(s => {
+    s.addEventListener("input", sendCommand);
+});
 </script>
+
 </body>
 </html>
