@@ -14,7 +14,6 @@
     }
     </script>
     <script type="module">
-        // ✅ Use base Cloudflare tunnel URL
         const SERVER_URL = "https://mil-lists-local-started.trycloudflare.com";
 
         document.addEventListener("DOMContentLoaded", () => {
@@ -61,11 +60,13 @@
             }
 
             function updateServer() {
-                const lx = parseFloat(sliders[0].value) || 0; // elbow
-                const ly = parseFloat(sliders[1].value) || 0; // biceps
+                const elbow = parseFloat(sliders[0].value) || 0;
+                const biceps = parseFloat(sliders[1].value) || 0;
+                const shoulder = parseFloat(sliders[2].value) || 0;
+                const shoulderBlade = parseFloat(sliders[3].value) || 0;
                 const fingers = parseInt(document.body.dataset.fingers || 0);
 
-                fetch(`${SERVER_URL}/set?lx=${lx}&ly=${ly}&fingers=${fingers}`)
+                fetch(`${SERVER_URL}/set?elbow=${elbow}&biceps=${biceps}&shoulder=${shoulder}&shoulderBlade=${shoulderBlade}&fingers=${fingers}`)
                     .then(res => res.text())
                     .catch(err => console.error("Server update error:", err));
             }
@@ -77,10 +78,15 @@
                     const data = await res.json();
 
                     // Update sliders with server state
-                    sliders[0].value = data.lx;
-                    sliders[1].value = data.ly;
-                    sliderDisplays[0].textContent = data.lx.toFixed(1) + "°";
-                    sliderDisplays[1].textContent = data.ly.toFixed(1) + "°";
+                    sliders[0].value = data.elbow;
+                    sliders[1].value = data.biceps;
+                    sliders[2].value = data.shoulder;
+                    sliders[3].value = data.shoulderBlade;
+
+                    sliderDisplays[0].textContent = data.elbow.toFixed(1) + "°";
+                    sliderDisplays[1].textContent = data.biceps.toFixed(1) + "°";
+                    sliderDisplays[2].textContent = data.shoulder.toFixed(1) + "°";
+                    sliderDisplays[3].textContent = data.shoulderBlade.toFixed(1) + "°";
 
                     // Update finger state
                     document.body.dataset.fingers = data.fingers;
@@ -102,7 +108,6 @@
 </head>
 
 <body data-fingers="0">
-    <!-- MQTT/Server Connection Status -->
     <div id="mqttStatus" style="
         position: fixed;
         top: 10px;
