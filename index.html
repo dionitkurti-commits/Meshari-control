@@ -23,7 +23,6 @@
             const fingerCloseBtn = document.querySelector(".finger-btn:nth-child(2)");
             const resetBtn = document.getElementById("resetSlidersBtn");
 
-            // Update slider display and server
             sliders.forEach((slider, index) => {
                 slider.addEventListener("input", () => {
                     sliderDisplays[index].textContent = slider.value + "°";
@@ -31,24 +30,21 @@
                 });
             });
 
-            // Reset sliders
             resetBtn.addEventListener("click", () => {
                 sliders.forEach((s, i) => {
                     if (!s.disabled) {
-                        // Biceps centered at 0, others start at 0
-                        if (s.min < 0) s.value = 0; 
-                        else s.value = 0;
+                        // Reset based on type
+                        if (s.dataset.centered === "true") s.value = 0;
+                        else s.value = s.min;
                     }
                     sliderDisplays[i].textContent = s.value + "°";
                 });
                 updateServer();
             });
 
-            // Finger buttons
             fingerOpenBtn.addEventListener("click", () => setFingers(0));
             fingerCloseBtn.addEventListener("click", () => setFingers(1));
 
-            // Individual finger buttons
             document.querySelectorAll(".individual-finger-btn").forEach((btn, idx) => {
                 btn.addEventListener("click", () => setIndividualFinger(idx));
             });
@@ -64,32 +60,31 @@
             }
 
             function updateServer() {
-                const Brryli = parseFloat(sliders[0].value) || 0;   // Elbow 0-120
-                const Biceps = parseFloat(sliders[1].value) || 0;   // -45 to 45
-                const Krahu = parseFloat(sliders[2].value) || 0;    // Shoulder 0-90
-                const Mbajtesi = parseFloat(sliders[3].value) || 0; // Shoulder Blade 0-90
+                const lx = parseFloat(sliders[0].value) || 0; // Elbow
+                const ly = parseFloat(sliders[1].value) || 0; // Biceps
+                const shoulder = parseFloat(sliders[2].value) || 0;
+                const shoulderBlade = parseFloat(sliders[3].value) || 0;
                 const fingers = parseInt(document.body.dataset.fingers || 0);
 
-                fetch(`${SERVER_URL}/set?Brryli=${Brryli}&Biceps=${Biceps}&Krahu=${Krahu}&Mbajtesi=${Mbajtesi}&fingers=${fingers}`)
+                fetch(`${SERVER_URL}/set?lx=${lx}&ly=${ly}&shoulder=${shoulder}&shoulderBlade=${shoulderBlade}&fingers=${fingers}`)
                     .then(res => res.text())
                     .catch(err => console.error("Server update error:", err));
             }
 
-            // Poll server for live updates
             async function pollServer() {
                 try {
                     const res = await fetch(`${SERVER_URL}/state`);
                     const data = await res.json();
 
-                    sliders[0].value = data.Brryli;
-                    sliders[1].value = data.Biceps;
-                    sliders[2].value = data.Krahu;
-                    sliders[3].value = data.Mbajtesi;
+                    sliders[0].value = data.lx;
+                    sliders[1].value = data.ly;
+                    sliders[2].value = data.shoulder;
+                    sliders[3].value = data.shoulderBlade;
 
-                    sliderDisplays[0].textContent = data.Brryli.toFixed(1) + "°";
-                    sliderDisplays[1].textContent = data.Biceps.toFixed(1) + "°";
-                    sliderDisplays[2].textContent = data.Krahu.toFixed(1) + "°";
-                    sliderDisplays[3].textContent = data.Mbajtesi.toFixed(1) + "°";
+                    sliderDisplays[0].textContent = data.lx.toFixed(1) + "°";
+                    sliderDisplays[1].textContent = data.ly.toFixed(1) + "°";
+                    sliderDisplays[2].textContent = data.shoulder.toFixed(1) + "°";
+                    sliderDisplays[3].textContent = data.shoulderBlade.toFixed(1) + "°";
 
                     document.body.dataset.fingers = data.fingers;
 
@@ -103,26 +98,13 @@
                 }
             }
 
-            setInterval(pollServer, 50); // 50ms poll interval
+            setInterval(pollServer, 50);
         });
     </script>
 </head>
 
 <body data-fingers="0">
-    <div id="mqttStatus" style="
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        background: rgba(0,0,0,0.8);
-        color: #ff0000;
-        padding: 10px 20px;
-        border-radius: 5px;
-        font-weight: bold;
-        font-size: 14px;
-        z-index: 1000;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-    ">🔴 Disconnected</div>
-
+    <div id="mqttStatus">🔴 Disconnected</div>
     <div class="container">
         <div class="column-1-wrapper">
             <img src="img/logo.png" alt="Logo" class="slider-logo">
@@ -131,27 +113,23 @@
                     Sliders
                     <button class="reset-sliders-btn" id="resetSlidersBtn">Reset</button>
                 </div>
-
                 <div class="slider-wrapper">
-                    <div class="slider-label">Brryli (Elbow)</div>
+                    <div class="slider-label">Elbow</div>
                     <input type="range" class="slider" min="0" max="120" value="0" step="0.1">
                     <span class="slider-value-display">0.0°</span>
                 </div>
-
                 <div class="slider-wrapper">
                     <div class="slider-label">Biceps</div>
-                    <input type="range" class="slider" min="-45" max="45" value="0" step="0.1">
+                    <input type="range" class="slider" min="-45" max="45" value="0" step="0.1" data-centered="true">
                     <span class="slider-value-display">0.0°</span>
                 </div>
-
                 <div class="slider-wrapper">
-                    <div class="slider-label">Krahu (Shoulder)</div>
+                    <div class="slider-label">Shoulder</div>
                     <input type="range" class="slider" min="0" max="90" value="0" step="0.1">
                     <span class="slider-value-display">0.0°</span>
                 </div>
-
                 <div class="slider-wrapper">
-                    <div class="slider-label">Mbajtesi (Shoulder Blade)</div>
+                    <div class="slider-label">Shoulder Blade</div>
                     <input type="range" class="slider" min="0" max="90" value="0" step="0.1">
                     <span class="slider-value-display">0.0°</span>
                 </div>
@@ -164,17 +142,6 @@
                 <div class="fingers-buttons">
                     <button class="finger-btn">Open Fingers</button>
                     <button class="finger-btn">Close Fingers</button>
-                </div>
-            </div>
-
-            <div class="section showcase-section">
-                <div class="section-title">Live IsaacSim Showcase window</div>
-                <div class="showcase-window" id="isaacSimWindow">
-                    <div class="axis-indicator">
-                        <div class="axis-label" style="color: #ff0000;">X</div>
-                        <div class="axis-label" style="color: #00ff00;">Y</div>
-                        <div class="axis-label" style="color: #0000ff;">Z</div>
-                    </div>
                 </div>
             </div>
         </div>
