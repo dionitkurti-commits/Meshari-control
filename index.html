@@ -34,7 +34,11 @@
             // Reset sliders
             resetBtn.addEventListener("click", () => {
                 sliders.forEach((s, i) => {
-                    if (!s.disabled) s.value = 0;
+                    if (!s.disabled) {
+                        // Biceps centered at 0, others start at 0
+                        if (s.min < 0) s.value = 0; 
+                        else s.value = 0;
+                    }
                     sliderDisplays[i].textContent = s.value + "°";
                 });
                 updateServer();
@@ -60,11 +64,10 @@
             }
 
             function updateServer() {
-                // IsaacSim joint names and limits
-                const Brryli = parseFloat(sliders[0].value) || 0;       // Elbow
-                const Biceps = parseFloat(sliders[1].value) || 0;      // Biceps
-                const Krahu = parseFloat(sliders[2].value) || 0;       // Shoulder
-                const Mbajtesi = parseFloat(sliders[3].value) || 0;    // Shoulder Blade
+                const Brryli = parseFloat(sliders[0].value) || 0;   // Elbow 0-120
+                const Biceps = parseFloat(sliders[1].value) || 0;   // -45 to 45
+                const Krahu = parseFloat(sliders[2].value) || 0;    // Shoulder 0-90
+                const Mbajtesi = parseFloat(sliders[3].value) || 0; // Shoulder Blade 0-90
                 const fingers = parseInt(document.body.dataset.fingers || 0);
 
                 fetch(`${SERVER_URL}/set?Brryli=${Brryli}&Biceps=${Biceps}&Krahu=${Krahu}&Mbajtesi=${Mbajtesi}&fingers=${fingers}`)
@@ -78,7 +81,6 @@
                     const res = await fetch(`${SERVER_URL}/state`);
                     const data = await res.json();
 
-                    // Update sliders
                     sliders[0].value = data.Brryli;
                     sliders[1].value = data.Biceps;
                     sliders[2].value = data.Krahu;
@@ -101,7 +103,7 @@
                 }
             }
 
-            setInterval(pollServer, 50);
+            setInterval(pollServer, 50); // 50ms poll interval
         });
     </script>
 </head>
@@ -122,7 +124,6 @@
     ">🔴 Disconnected</div>
 
     <div class="container">
-        <!-- Sliders -->
         <div class="column-1-wrapper">
             <img src="img/logo.png" alt="Logo" class="slider-logo">
             <div class="section sliders-section">
@@ -145,19 +146,18 @@
 
                 <div class="slider-wrapper">
                     <div class="slider-label">Krahu (Shoulder)</div>
-                    <input type="range" class="slider" min="-90" max="0" value="0" step="0.1">
+                    <input type="range" class="slider" min="0" max="90" value="0" step="0.1">
                     <span class="slider-value-display">0.0°</span>
                 </div>
 
                 <div class="slider-wrapper">
                     <div class="slider-label">Mbajtesi (Shoulder Blade)</div>
-                    <input type="range" class="slider" min="-90" max="0" value="0" step="0.1">
+                    <input type="range" class="slider" min="0" max="90" value="0" step="0.1">
                     <span class="slider-value-display">0.0°</span>
                 </div>
             </div>
         </div>
 
-        <!-- Fingers & Showcase -->
         <div class="column-2-wrapper">
             <div class="section fingers-section">
                 <div class="section-title">Open/Close Fingers</div>
@@ -179,7 +179,6 @@
             </div>
         </div>
 
-        <!-- Individual Fingers -->
         <div class="section individual-fingers-section">
             <div class="section-title">Individual Finger Control</div>
             <div class="individual-fingers-grid">
